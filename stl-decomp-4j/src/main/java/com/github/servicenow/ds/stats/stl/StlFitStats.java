@@ -16,6 +16,8 @@ public class StlFitStats {
 	private final double fSeasonalVariance;
 	private final double fResidualMean;
 	private final double fResidualVariance;
+	private final double fWeightedResidualVariance;
+	private final double[] fWeights;
 	private final double fResidualLogLikelihood;
 	private final double fDeSeasonalMean;
 	private final double fDeSeasonalVariance;
@@ -38,6 +40,7 @@ public class StlFitStats {
 		final double[] trend = stl.getTrend();
 		final double[] seasonal = stl.getSeasonal();
 		final double[] residuals = stl.getResidual();
+		final double[] Weights = stl.getWeights();
 
 		double dataSum = 0.0;
 		double dataSqSum = 0.0;
@@ -50,6 +53,7 @@ public class StlFitStats {
 		double seasonalMin = 1.0e100;
 		double residualSum = 0.0;
 		double residualSqSum = 0.0;
+		double weightedResidualSqSum = 0.0;
 		double deSeasonalSum = 0.0;
 		double deSeasonalSqSum = 0.0;
 		double deTrendSum = 0.0;
@@ -98,6 +102,14 @@ public class StlFitStats {
 		fDeSeasonalMean = deSeasonalSum * denom;
 		fDeTrendMean = deTrendSum * denom;
 
+		for (int i = 0; i < length; ++i) {
+		    double r = residuals[i];
+		    double w = Weights[i];
+		    weightedResidualSqSum += w * Math.pow((r - fResidualMean), 2);
+		}
+
+		fWeightedResidualVariance = weightedResidualSqSum / Weights.length;
+		fWeights = Weights;
 		// The data is from a valid STL decomposition, so length = 4 at minimum.
 
 		double corrBC = length / (length - 1.0); // Bessel's correction
@@ -211,9 +223,30 @@ public class StlFitStats {
 	 *
 	 * @return the variance of the residual
 	 */
+
 	public double getResidualVariance() {
 		return fResidualVariance;
 	}
+
+	/**
+     * Get the residual weights.
+     *
+     * @return the residual weights
+     */
+
+	public double[] getWeights() {
+	    return fWeights;
+	}
+
+	/**
+     * Get weighted variance of the residual.
+     *
+     * @return weighted variance of the residual
+     */
+
+    public double getWeightedResidualVariance() {
+        return fWeightedResidualVariance;
+    }
 
 	/**
 	 * Get the standard deviation of the residual.
@@ -349,3 +382,4 @@ public class StlFitStats {
 	}
 
 }
+
